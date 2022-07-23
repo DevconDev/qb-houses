@@ -368,6 +368,30 @@ RegisterNetEvent('qb-houses:server:SetInsideMeta', function(insideId, bool)
     end
 end)
 
+RegisterNetEvent('qb-houses:server:TierChange', function(house, tier)
+    local src = source
+    local Player = QBCore.Functions.GetPlayer(src)
+    if not Player then return end
+    if Player.PlayerData.job.name ~= 'realestate' then return end
+    if Player.PlayerData.job.grade.level < 3 then return end
+    if tier > 24 then -- Your highest tier
+        TriggerClientEvent('QBCore:Notify', src, "This tier does not exist..", "error")
+        return
+    end
+
+    if Config.Houses[house] then
+        Config.Houses[house].tier = tier
+        MySQL.update('UPDATE houselocations SET tier = ? WHERE name = ?', {tier, house})
+        TriggerClientEvent('qb-houses:client:SetHouseTier', -1, house, tier)
+        print("^3[qb-houses] ^5"..Player.PlayerData.name.." has changed tier of "..house.." to Tier: "..tier.."^7")
+        TriggerEvent('qb-log:server:CreateLog', 'playerhouses', "Tier Change", 'black', "**"..Player.PlayerData.name.."** has changed tier of **"..house.."** to Tier: "..tier)
+        TriggerClientEvent('QBCore:Notify', src, "changed tier of "..house.." to Tier: "..tier, "success")
+
+    else
+        TriggerClientEvent('QBCore:Notify', src, "Invalid house name..", "error")
+    end
+end)
+
 -- Callbacks
 
 QBCore.Functions.CreateCallback('qb-houses:server:buyFurniture', function(source, cb, price)
